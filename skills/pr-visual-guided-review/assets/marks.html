@@ -163,6 +163,14 @@ svg.d { width: 100%; height: auto; display: block; }
 .fallback { width: 100%; height: 200px; margin-top: 12px; font: 12px/1.5 var(--mono); border-radius: 10px; padding: 10px; border: 1px solid var(--ink-4); background: rgba(var(--ink-rgb), .03); color: var(--ink-1); }
 
 @media (prefers-reduced-motion: reduce) { .go .lift { transition: none; } .go:hover .lift, .go:active .lift { transform: none; } }
+
+/* OpenGhost drawing style */
+.edge { stroke: transparent; stroke-width: 2; }
+.go:hover .edge { stroke: rgba(var(--ink-rgb), .22); }
+.go:focus-visible .edge { stroke: rgba(var(--glow-rgb), .9); }
+.chev { font: 800 13px var(--sans); }
+#view svg rect[style*="stroke:var(--ink-3)"], #view svg rect[style*="stroke:var(--edge)"], #view svg rect[style*="stroke:var(--ink-4)"] { stroke-width: 2px !important; stroke: rgba(var(--ink-rgb), .3) !important; }
+#view svg path[style*="stroke-width:1.2"] { stroke-width: 2.2px !important; }
 </style>
 <style>
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
@@ -174,22 +182,21 @@ svg.d { width: 100%; height: auto; display: block; }
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <marker id="a-ink" viewBox="0 0 7 7" refX="6.5" refY="3.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L6.5,3.5 L0,7 z" style="fill:var(--ink-2)"/></marker>
-    <marker id="a-faded" viewBox="0 0 7 7" refX="6.5" refY="3.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L6.5,3.5 L0,7 z" style="fill:var(--ink-3)"/></marker>
-    <marker id="a-down" viewBox="0 0 7 7" refX="6.5" refY="3.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L6.5,3.5 L0,7 z" style="fill:rgb(var(--down))"/></marker>
-  </defs>
+<marker id="a-ink" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgb(var(--t1))"/></marker>
+<marker id="a-teal" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgb(var(--t3))"/></marker>
+<marker id="a-faded" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgba(var(--ink-rgb),.3)"/></marker>
+<marker id="a-down" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgb(var(--down))"/></marker>
+</defs>
 </svg>
 <div class="wrap">
   <header><h1>Marks</h1></header>
   <main class="pane view"><div class="grid" id="grid"></div></main>
 </div>
 <script>
-// ---------- Drawing helpers ----------
-// Every part has the same thin neutral outline. New parts get a small teal +
-// and a faint teal fill, changed parts a small blue ~ and a faint blue fill.
-// Untouched parts are faded. Neighbours from the level above are faded and
-// dashed. A round › is the only sign that a part opens, and clickable parts
-// also sit on a small shadow. Finding badges are solid orange "F1 ›" pills.
+// ---------- Drawing helpers (OpenGhost drawing style) ----------
+// Solid soft fills with no outlines, colored lines with round ends, plain
+// text labels. New parts are teal, changed parts blue, untouched parts grey.
+// A small solid dot marks new or changed. A dark round › means it opens.
 
 const KIND = {
   new:     { tint: "--t3", mark: "+" },
@@ -197,89 +204,82 @@ const KIND = {
   ctx:     { tint: null, mark: "", faded: true },
   ext:     { tint: null, mark: "", pill: true },
 };
-const tintOf = (k, a = 0.07) => (k.tint ? `rgba(var(${k.tint}),${a})` : "none");
-const markOf = (k, x, y) => (k.mark ? `<text class="mark" x="${x}" y="${y}" style="fill:rgb(var(${k.tint}))">${k.mark}</text>` : "");
+const tintOf = (k, a = 0.16) => (k && k.tint ? `rgba(var(${k.tint}),${a})` : `rgba(var(--ink-rgb),${k && k.faded ? .05 : .08})`);
+const markOf = (k, x, y) => (k && k.mark ? `<circle cx="${x}" cy="${y}" r="3" style="fill:rgb(var(${k.tint}))"/>` : "");
 function chevron(cx, cy) {
-  return `<circle cx="${cx}" cy="${cy}" r="8" style="fill:var(--ink-2)"/><text class="chev" x="${cx}" y="${cy - 0.5}">›</text>`;
+  return `<circle cx="${cx}" cy="${cy}" r="9" style="fill:rgba(var(--ink-rgb),.82)"/><text class="chev" x="${cx}" y="${cy - 0.5}">›</text>`;
 }
 function clickable(go, label, x, y, w, h, rx, inner) {
   return `<g class="go" data-go="${go}" tabindex="0" role="button" aria-label="Open ${label}">
-    <rect x="${x + 1}" y="${y + 3}" width="${w}" height="${h}" rx="${rx}" style="fill:rgba(var(--ink-rgb),.08)"/>
     <g class="lift"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:var(--bg)"/>${inner}</g></g>`;
 }
-// One part of a diagram: a box, a sequence column head, a state, a table.
 function part(x, y, w, h, label, kind, go, opts = {}) {
   const k = KIND[kind];
-  const rx = k.pill ? h / 2 : opts.rx ?? 4;
+  const rx = k.pill ? h / 2 : opts.rx ?? 10;
   const lines = String(label).split("\n");
-  const cx = x + (w - (go ? 18 : 0)) / 2;
-  const text = lines.map((t, i) => `<text class="lbl${k.faded ? " faded" : ""}" x="${cx}" y="${y + h / 2 + (i - (lines.length - 1) / 2) * 15}">${t}</text>`).join("");
-  const inner = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${tintOf(k)};stroke:${k.faded ? "var(--ink-4)" : "var(--edge)"};stroke-width:1"/>
-    ${text}${markOf(k, x + 10, y + 10)}${go ? chevron(x + w - 14, y + h / 2) : ""}`;
+  const cx = x + (w - (go ? 20 : 0)) / 2;
+  const text = lines.map((t, i) => `<text class="lbl${k.faded ? " faded" : ""}" x="${cx}" y="${y + h / 2 + (i - (lines.length - 1) / 2) * 15}" style="font-weight:600">${t}</text>`).join("");
+  const inner = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${tintOf(k)}"/>
+    ${text}${markOf(k, x + 9, y + 9)}${go ? chevron(x + w - 16, y + h / 2) : ""}`;
   return go ? clickable(go, lines.join(" "), x, y, w, h, rx, inner) : `<g>${inner}</g>`;
 }
-// A neighbour from the level above, kept at the edge so you keep your bearings.
 function neighbour(x, y, w, h, label) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" style="fill:none;stroke:var(--ink-4);stroke-dasharray:3 3"/>
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" style="fill:rgba(var(--ink-rgb),.045)"/>
     <text class="lbl sm faded" x="${x + w / 2}" y="${y + h / 2}">${label}</text>`;
 }
-// The part you opened, drawn as a frame around what is inside it.
 function frame(x, y, w, h, label, kind) {
   const k = KIND[kind];
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" style="fill:${tintOf(k, .035)};stroke:var(--ink-4)"/>
-    ${markOf(k, x + 16, y + 17)}<text class="lbl sm start" x="${x + 28}" y="${y + 17}" style="font-weight:600;fill:var(--ink-2)">${label}</text>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" style="fill:rgba(var(--ink-rgb),.035)"/>
+    ${markOf(k, x + 18, y + 18)}<text class="lbl sm start" x="${x + 28}" y="${y + 18}" style="font-weight:650;fill:var(--ink-1)">${label}</text>`;
 }
+const TONES = { ink: "rgb(var(--t1))", teal: "rgb(var(--t3))", faded: "rgba(var(--ink-rgb),.3)", down: "rgb(var(--down))" };
 function arrow(x1, y1, x2, y2, label = "", opts = {}) {
   const tone = opts.tone || "ink";
-  const stroke = tone === "down" ? "rgb(var(--down))" : tone === "faded" ? "var(--ink-3)" : "var(--ink-2)";
-  const lx = opts.lx ?? (x1 + x2) / 2, ly = opts.ly ?? (y1 + y2) / 2 - 9;
-  return `<path d="${opts.d || `M${x1},${y1} L${x2},${y2}`}" style="fill:none;stroke:${stroke};stroke-width:1.2${opts.dash ? ";stroke-dasharray:4 3" : ""}" marker-end="url(#a-${tone})"/>
-    ${label ? `<text class="lbl sm" x="${lx}" y="${ly}" ${tone === "down" ? 'style="fill:rgb(var(--down))"' : ""}>${label}</text>` : ""}`;
+  const dash = opts.dash || tone === "faded" || tone === "teal";
+  const lx = opts.lx ?? (x1 + x2) / 2, ly = opts.ly ?? (y1 + y2) / 2 - 11;
+  return `<path d="${opts.d || `M${x1},${y1} L${x2},${y2}`}" style="fill:none;stroke:${TONES[tone]};stroke-width:2.4;stroke-linecap:round${dash ? ";stroke-dasharray:6 6" : ""}" marker-end="url(#a-${tone})"/>
+    ${label ? `<text class="lbl sm" x="${lx}" y="${ly}" style="font-weight:550;${tone === "down" ? "fill:rgb(var(--down))" : ""}">${label}</text>` : ""}`;
 }
 function badge(x, y, id) {
   return `<g class="badge" data-finding="${id}" tabindex="0" role="button" aria-label="Finding ${id}">
-    <rect x="${x}" y="${y}" width="36" height="17" rx="8.5" style="fill:rgb(var(--t2));stroke:var(--bg);stroke-width:1.5"/>
-    <text x="${x + 18}" y="${y + 8.5}">${id} ›</text></g>`;
+    <rect x="${x}" y="${y}" width="36" height="18" rx="9" style="fill:rgb(var(--t2))"/>
+    <text x="${x + 18}" y="${y + 9}">${id} ›</text></g>`;
 }
-// Sequence diagram: numbered messages between column heads.
 function sequence(cols, steps, top, gap) {
   const x = Object.fromEntries(cols.map((c) => [c.name, c.x]));
   const bottom = top + steps.length * gap + 10;
-  let s = cols.map((c) => (c.neighbour ? neighbour(c.x - 52, top - 52, 104, 30, c.name)
-    : part(c.x - 70, top - 54, 140, 34, c.name, c.kind, c.go)) +
-    `<path d="M${c.x},${top - 18} L${c.x},${bottom}" style="stroke:var(--ink-4);stroke-dasharray:3 4"/>`).join("");
+  let s = cols.map((c) => (c.neighbour ? neighbour(c.x - 56, top - 52, 112, 32, c.name)
+    : part(c.x - 72, top - 54, 144, 36, c.name, c.kind, c.go)) +
+    `<path d="M${c.x},${top - 14} L${c.x},${bottom}" style="stroke:rgba(var(--ink-rgb),.14);stroke-width:1.5;stroke-dasharray:3 5"/>`).join("");
   steps.forEach(([a, b, label, opt = {}], i) => {
     const y = top + 16 + i * gap, x1 = x[a], x2 = x[b], dir = x2 > x1 ? 1 : -1;
-    s += `<circle cx="${x1 - dir * 14}" cy="${y}" r="8" style="fill:var(--bg);stroke:var(--ink-4)"/>
-      <text class="lbl xs" x="${x1 - dir * 14}" y="${y}">${i + 1}</text>` +
-      arrow(x1 + dir * 2, y, x2 - dir * 3, y, label, opt) +
-      (opt.badge ? badge(Math.max(x1, x2) + 8, y - 8, opt.badge) : "");
+    const tone = opt.tone || (dir > 0 ? "ink" : "teal");
+    s += `<text class="lbl xs faded" x="${x1 - dir * 16}" y="${y}">${i + 1}</text>` +
+      arrow(x1 + dir * 4, y, x2 - dir * 6, y, label, { ...opt, tone }) +
+      (opt.badge ? badge(Math.max(x1, x2) + 10, y - 9, opt.badge) : "");
   });
   return s;
 }
-// Wireframe parts: grey sketches with the product's real labels.
 function win(x, y, w, h, title, kind) {
-  const k = kind ? KIND[kind] : null;
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" style="fill:${k ? tintOf(k, .04) : "rgba(var(--ink-rgb),.025)"};stroke:var(--edge)"/>
-    <rect x="${x}" y="${y}" width="${w}" height="14" rx="8" style="fill:rgba(var(--ink-rgb),.05)"/>
-    ${k ? markOf(k, x + w - 12, y + 26) : ""}
-    ${title ? `<text class="lbl start" x="${x + 18}" y="${y + 36}" style="font-weight:650">${title}</text>` : ""}`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" style="fill:rgba(var(--ink-rgb),.025);stroke:rgba(var(--ink-rgb),.42);stroke-width:2.2"/>
+    <path d="M${x + 1},${y + 18} L${x + w - 1},${y + 18}" style="stroke:rgba(var(--ink-rgb),.14);stroke-width:1.5"/>
+    ${[0, 1, 2].map((i) => `<circle cx="${x + 12 + i * 9}" cy="${y + 9}" r="2.5" style="fill:rgba(var(--ink-rgb),.25)"/>`).join("")}
+    ${title ? `<text class="lbl start" x="${x + 16}" y="${y + 38}" style="font-weight:700">${title}</text>` : ""}`;
 }
 function input(x, y, w, label) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="4" style="fill:none;stroke:var(--ink-3)"/>
-    <text class="lbl xs start" x="${x + 8}" y="${y + 13}">${label}</text>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="8" style="fill:rgba(var(--ink-rgb),.08)"/>
+    <text class="lbl xs start faded" x="${x + 10}" y="${y + 13}">${label}</text>`;
 }
 function button(x, y, w, label) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="13" style="fill:var(--ink-2)"/>
-    <text class="lbl xs" x="${x + w / 2}" y="${y + 13}" style="fill:var(--bg)">${label}</text>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="13" style="fill:rgba(var(--ink-rgb),.85)"/>
+    <text class="lbl xs" x="${x + w / 2}" y="${y + 13}" style="fill:var(--bg);font-weight:600">${label}</text>`;
 }
-function textLine(x, y, w) { return `<rect x="${x}" y="${y}" width="${w}" height="5" rx="2.5" style="fill:var(--ink-4)"/>`; }
-// A changed or new region inside a wireframe, optionally opening a level.
+function textLine(x, y, w) { return `<rect x="${x}" y="${y - 1}" width="${w}" height="7" rx="3.5" style="fill:rgba(var(--ink-rgb),.13)"/>`; }
 function region(x, y, w, h, kind, go, label, inner = "") {
   const k = KIND[kind];
-  const body = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="5" style="fill:${tintOf(k, .12)};stroke:var(--edge)"/>
-    ${markOf(k, x - 9, y + 7)}${inner}${go ? chevron(x + w + 12, y + h / 2) : ""}`;
-  return go ? clickable(go, label, x, y, w + 24, h, 5, body) : body;
+  const body = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="8" style="fill:${tintOf(k, .2)}"/>
+    ${markOf(k, x - 8, y + 8)}${inner}${go ? chevron(x + w + 14, y + h / 2) : ""}`;
+  return go ? clickable(go, label, x, y, w + 26, h, 8, body) : body;
 }
 const svg = (h, body, label, w = 760) => `<svg class="d" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">${body}</svg>`;
 
