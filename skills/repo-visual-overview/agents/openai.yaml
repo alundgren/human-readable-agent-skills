@@ -1,0 +1,7 @@
+interface:
+  display_name: "Repo Visual Overview"
+  short_description: "Draw a diagram-first HTML overview of one repository"
+  default_prompt: "Use $repo-visual-overview for this repository."
+
+policy:
+  allow_implicit_invocation: false
