@@ -1,0 +1,7 @@
+interface:
+  display_name: "PR Visual Overview"
+  short_description: "Draw a diagram-first HTML overview of one PR"
+  default_prompt: "Use $pr-visual-overview for this pull request."
+
+policy:
+  allow_implicit_invocation: false

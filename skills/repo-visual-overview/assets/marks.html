@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marks</title>
+<!--
+  Every mark the overview page uses, one at a time, drawn by the helpers in
+  template.html. A reference for how each one looks, not a layout to copy.
+-->
+<style>
+:root {
+  color-scheme: light;
+  --bg: #EEF1F6;
+  --ink-rgb: 12, 15, 22;
+  --ink-1: rgba(var(--ink-rgb), .92);
+  --ink-2: rgba(var(--ink-rgb), .64);
+  --ink-3: rgba(var(--ink-rgb), .46);
+  --ink-4: rgba(var(--ink-rgb), .12);
+  --edge: rgba(var(--ink-rgb), .26);
+  --t1: 72, 133, 223;
+  --t2: 202, 103, 25;
+  --t3: 9, 148, 133;
+  --t4: 128, 84, 226;
+  --up: 22, 138, 70;
+  --down: 214, 48, 40;
+  --glow-rgb: 92, 118, 230;
+  --pane: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.5));
+  --pane-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(30,48,88,.05), 0 22px 50px -26px rgba(30,48,88,.28);
+  --solid: rgb(23,23,23);
+  --on-solid: #fff;
+  --wash: .25;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111216; --ink-rgb: 255, 255, 255;
+    --ink-1: rgba(var(--ink-rgb), .93); --ink-2: rgba(var(--ink-rgb), .66);
+    --ink-3: rgba(var(--ink-rgb), .44); --ink-4: rgba(var(--ink-rgb), .13);
+    --edge: rgba(var(--ink-rgb), .28);
+    --t1: 96, 156, 240; --t2: 232, 132, 52; --t3: 38, 186, 166; --t4: 160, 126, 255;
+    --up: 110, 205, 140; --down: 255, 115, 105; --glow-rgb: 150, 172, 255;
+    --pane: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    --pane-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 22px 50px -26px rgba(0,0,0,.6);
+    --solid: rgb(250,250,250); --on-solid: rgb(15,15,15); --wash: .15;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111216; --ink-rgb: 255, 255, 255;
+  --ink-1: rgba(var(--ink-rgb), .93); --ink-2: rgba(var(--ink-rgb), .66);
+  --ink-3: rgba(var(--ink-rgb), .44); --ink-4: rgba(var(--ink-rgb), .13);
+  --edge: rgba(var(--ink-rgb), .28);
+  --t1: 96, 156, 240; --t2: 232, 132, 52; --t3: 38, 186, 166; --t4: 160, 126, 255;
+  --up: 110, 205, 140; --down: 255, 115, 105; --glow-rgb: 150, 172, 255;
+  --pane: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  --pane-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 22px 50px -26px rgba(0,0,0,.6);
+  --solid: rgb(250,250,250); --on-solid: rgb(15,15,15); --wash: .15;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink-1);
+  font: 14px/1.5 var(--sans);
+  background:
+    radial-gradient(900px 600px at 0% 0%, rgba(var(--t1), var(--wash)), transparent 60%),
+    radial-gradient(800px 600px at 100% 0%, rgba(var(--t4), calc(var(--wash) * .8)), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 28px 24px 40px; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid rgba(var(--glow-rgb), .6); outline-offset: 2px; border-radius: 6px; }
+a { color: rgb(var(--t1)); text-underline-offset: 2px; }
+
+.pane {
+  background: var(--pane); backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid rgba(var(--ink-rgb), .08); border-radius: 22px;
+  box-shadow: var(--pane-shadow);
+}
+
+header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+h1 { font-size: 19px; font-weight: 650; margin: 0; }
+.mono { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+
+nav { display: flex; gap: 6px; align-items: center; margin-bottom: 14px; }
+.tab { padding: 7px 16px; border-radius: 999px; font-weight: 550; color: var(--ink-2); }
+.tab:hover { color: var(--ink-1); }
+.tab[aria-selected="true"] { background: rgba(var(--ink-rgb), .07); color: var(--ink-1); }
+.theme { margin-left: auto; width: 34px; height: 34px; border-radius: 999px; color: var(--ink-2); font-size: 16px; }
+.theme:hover { background: rgba(var(--ink-rgb), .06); }
+
+/* Tree views */
+.view { padding: 18px 22px 22px; }
+.crumbs { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-3); min-height: 24px; flex-wrap: wrap; }
+.crumbs button { color: var(--ink-2); padding: 2px 4px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--ink-4); }
+.crumbs button:hover { color: var(--ink-1); text-decoration-color: currentColor; }
+.crumbs .here { color: var(--ink-1); font-weight: 600; font-size: 15px; }
+.crumbs i { font-style: normal; }
+.q { color: var(--ink-2); font-size: 13px; margin: 0 0 6px 4px; }
+svg.d { width: 100%; height: auto; display: block; }
+.note { max-width: 640px; margin: 8px auto 0; color: var(--ink-2); text-align: center; }
+
+/* SVG parts */
+.lbl { font: 500 13px var(--sans); fill: var(--ink-1); text-anchor: middle; dominant-baseline: central; }
+.lbl.sm { font-size: 12px; fill: var(--ink-2); }
+.lbl.xs { font-size: 11px; fill: var(--ink-2); }
+.lbl.start { text-anchor: start; }
+.lbl.faded { fill: var(--ink-3); }
+.mark { font: 700 11px var(--mono); text-anchor: middle; dominant-baseline: central; }
+.go { cursor: pointer; }
+.go .lift { transition: transform .15s ease; }
+.go:hover .lift { transform: translateY(-2px); }
+.go:active .lift { transform: scale(.98); }
+.go:hover .edge { stroke: var(--ink-2); }
+.go:focus-visible { outline: none; }
+.go:focus-visible .edge { stroke: rgba(var(--glow-rgb), .9); stroke-width: 2; }
+.chev { font: 700 12px var(--sans); fill: var(--bg); text-anchor: middle; dominant-baseline: central; }
+
+@media (prefers-reduced-motion: reduce) { .go .lift { transition: none; } .go:hover .lift, .go:active .lift { transform: none; } }
+
+/* OpenGhost drawing style */
+.edge { stroke: transparent; stroke-width: 2; }
+.go:hover .edge { stroke: rgba(var(--ink-rgb), .22); }
+.go:focus-visible .edge { stroke: rgba(var(--glow-rgb), .9); }
+.chev { font: 800 13px var(--sans); }
+#view svg rect[style*="stroke:var(--ink-3)"], #view svg rect[style*="stroke:var(--edge)"], #view svg rect[style*="stroke:var(--ink-4)"] { stroke-width: 2px !important; stroke: rgba(var(--ink-rgb), .3) !important; }
+#view svg path[style*="stroke-width:1.2"] { stroke-width: 2.2px !important; }
+</style>
+<style>
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+  .cell { display: grid; gap: 6px; }
+  .cell code { font: 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ink-2); }
+  .cell span { font-size: 13px; color: var(--ink-1); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+<marker id="a-ink" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgb(var(--t1))"/></marker>
+<marker id="a-teal" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgb(var(--t3))"/></marker>
+<marker id="a-faded" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0,0.5 L9.5,5 L0,9.5 z" style="fill:rgba(var(--ink-rgb),.3)"/></marker>
+</defs>
+</svg>
+<div class="wrap">
+  <header><h1>Marks</h1></header>
+  <main class="pane view"><div class="grid" id="grid"></div></main>
+</div>
+<script>
+// ---------- Drawing helpers (OpenGhost drawing style) ----------
+// Solid soft fills with no outlines, colored lines with round ends, plain
+// text labels. Parts are blue, supporting parts grey, outside systems grey
+// pills. A dark round › means it opens.
+
+const KIND = {
+  part: { tint: "--t1", mark: "" },
+  ctx:  { tint: null, mark: "", faded: true },
+  ext:  { tint: null, mark: "", pill: true },
+};
+const tintOf = (k, a = 0.16) => (k && k.tint ? `rgba(var(${k.tint}),${a})` : `rgba(var(--ink-rgb),${k && k.faded ? .05 : .08})`);
+const markOf = (k, x, y) => (k && k.mark ? `<circle cx="${x}" cy="${y}" r="3" style="fill:rgb(var(${k.tint}))"/>` : "");
+function chevron(cx, cy) {
+  return `<circle cx="${cx}" cy="${cy}" r="9" style="fill:rgba(var(--ink-rgb),.82)"/><text class="chev" x="${cx}" y="${cy - 0.5}">›</text>`;
+}
+function clickable(go, label, x, y, w, h, rx, inner) {
+  return `<g class="go" data-go="${go}" tabindex="0" role="button" aria-label="Open ${label}">
+    <g class="lift"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:var(--bg)"/>${inner}</g></g>`;
+}
+function part(x, y, w, h, label, kind, go, opts = {}) {
+  const k = KIND[kind];
+  const rx = k.pill ? h / 2 : opts.rx ?? 10;
+  const lines = String(label).split("\n");
+  const cx = x + (w - (go ? 20 : 0)) / 2;
+  const text = lines.map((t, i) => `<text class="lbl${k.faded ? " faded" : ""}" x="${cx}" y="${y + h / 2 + (i - (lines.length - 1) / 2) * 15}" style="font-weight:600">${t}</text>`).join("");
+  const inner = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${tintOf(k)}"/>
+    ${text}${markOf(k, x + 9, y + 9)}${go ? chevron(x + w - 16, y + h / 2) : ""}`;
+  return go ? clickable(go, lines.join(" "), x, y, w, h, rx, inner) : `<g>${inner}</g>`;
+}
+function neighbour(x, y, w, h, label) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" style="fill:rgba(var(--ink-rgb),.045)"/>
+    <text class="lbl sm faded" x="${x + w / 2}" y="${y + h / 2}">${label}</text>`;
+}
+function frame(x, y, w, h, label, kind) {
+  const k = KIND[kind];
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" style="fill:rgba(var(--ink-rgb),.035)"/>
+    ${markOf(k, x + 18, y + 18)}<text class="lbl sm start" x="${x + 28}" y="${y + 18}" style="font-weight:650;fill:var(--ink-1)">${label}</text>`;
+}
+const TONES = { ink: "rgb(var(--t1))", teal: "rgb(var(--t3))", faded: "rgba(var(--ink-rgb),.3)" };
+function arrow(x1, y1, x2, y2, label = "", opts = {}) {
+  const tone = opts.tone || "ink";
+  const dash = opts.dash || tone === "faded" || tone === "teal";
+  const lx = opts.lx ?? (x1 + x2) / 2, ly = opts.ly ?? (y1 + y2) / 2 - 11;
+  return `<path d="${opts.d || `M${x1},${y1} L${x2},${y2}`}" style="fill:none;stroke:${TONES[tone]};stroke-width:2.4;stroke-linecap:round${dash ? ";stroke-dasharray:6 6" : ""}" marker-end="url(#a-${tone})"/>
+    ${label ? `<text class="lbl sm" x="${lx}" y="${ly}" style="font-weight:550">${label}</text>` : ""}`;
+}
+function sequence(cols, steps, top, gap) {
+  const x = Object.fromEntries(cols.map((c) => [c.name, c.x]));
+  const bottom = top + steps.length * gap + 10;
+  let s = cols.map((c) => (c.neighbour ? neighbour(c.x - 56, top - 52, 112, 32, c.name)
+    : part(c.x - 72, top - 54, 144, 36, c.name, c.kind, c.go)) +
+    `<path d="M${c.x},${top - 14} L${c.x},${bottom}" style="stroke:rgba(var(--ink-rgb),.14);stroke-width:1.5;stroke-dasharray:3 5"/>`).join("");
+  steps.forEach(([a, b, label, opt = {}], i) => {
+    const y = top + 16 + i * gap, x1 = x[a], x2 = x[b], dir = x2 > x1 ? 1 : -1;
+    const tone = opt.tone || (dir > 0 ? "ink" : "teal");
+    s += `<text class="lbl xs faded" x="${x1 - dir * 16}" y="${y}">${i + 1}</text>` +
+      arrow(x1 + dir * 4, y, x2 - dir * 6, y, label, { ...opt, tone });
+  });
+  return s;
+}
+function win(x, y, w, h, title, kind) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" style="fill:rgba(var(--ink-rgb),.025);stroke:rgba(var(--ink-rgb),.42);stroke-width:2.2"/>
+    <path d="M${x + 1},${y + 18} L${x + w - 1},${y + 18}" style="stroke:rgba(var(--ink-rgb),.14);stroke-width:1.5"/>
+    ${[0, 1, 2].map((i) => `<circle cx="${x + 12 + i * 9}" cy="${y + 9}" r="2.5" style="fill:rgba(var(--ink-rgb),.25)"/>`).join("")}
+    ${title ? `<text class="lbl start" x="${x + 16}" y="${y + 38}" style="font-weight:700">${title}</text>` : ""}`;
+}
+function input(x, y, w, label) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="8" style="fill:rgba(var(--ink-rgb),.08)"/>
+    <text class="lbl xs start faded" x="${x + 10}" y="${y + 13}">${label}</text>`;
+}
+function button(x, y, w, label) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="26" rx="13" style="fill:rgba(var(--ink-rgb),.85)"/>
+    <text class="lbl xs" x="${x + w / 2}" y="${y + 13}" style="fill:var(--bg);font-weight:600">${label}</text>`;
+}
+function textLine(x, y, w) { return `<rect x="${x}" y="${y - 1}" width="${w}" height="7" rx="3.5" style="fill:rgba(var(--ink-rgb),.13)"/>`; }
+function region(x, y, w, h, kind, go, label, inner = "") {
+  const k = KIND[kind];
+  const body = `<rect class="edge" x="${x}" y="${y}" width="${w}" height="${h}" rx="8" style="fill:${tintOf(k, .2)}"/>
+    ${markOf(k, x - 8, y + 8)}${inner}${go ? chevron(x + w + 14, y + h / 2) : ""}`;
+  return go ? clickable(go, label, x, y, w + 26, h, 8, body) : body;
+}
+const svg = (h, body, label, w = 760) => `<svg class="d" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">${body}</svg>`;
+
+const W = 220, H = 90;
+const MARKS = [
+  ["Part", 'part(…, "part")', part(30, 25, 160, 40, "Web app", "part")],
+  ["Supporting part", 'part(…, "ctx")', part(30, 25, 160, 40, "Test fixtures", "ctx")],
+  ["External system or package", 'part(…, "ext")', part(30, 25, 160, 40, "Stripe", "ext")],
+  ["Neighbour from the level above", "neighbour(…)", neighbour(30, 25, 160, 40, "API")],
+  ["Opens a deeper level", 'part(…, "part", "child-id")', part(30, 25, 160, 40, "Worker", "part", "x")],
+  ["What moves", 'arrow(…, "file list")', arrow(20, 50, 200, 50, "file list")],
+  ["Faded line to a neighbour", 'arrow(…, "", { tone: "faded" })', arrow(20, 50, 200, 50, "", { tone: "faded" })],
+  ["Opened part, around its insides", 'frame(…, "part")', frame(10, 8, 200, 74, "Worker", "part")],
+  ["Screen pieces", "win() textLine() input() button() region()",
+    win(20, 6, 180, 80, null) + textLine(34, 30, 110) + input(34, 44, 90, "Email") + button(130, 44, 56, "Send")],
+];
+document.getElementById("grid").innerHTML = MARKS.map(([name, call, body]) =>
+  `<div class="cell">${svg(H, body, name, W)}<span>${name}</span><code>${call}</code></div>`).join("");
+</script>
+</body>
+</html>
